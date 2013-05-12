@@ -4,10 +4,10 @@
 int NUM_RINGS = 2; // number of rings per team
 
 // RFID values go here.
-String red[] = { 
-  String("4500B8FA5453"),
+String redID[] = { 
+  String("500093D1F5E7"),
   String("4500B8A1A0FC") };
-String blue[] = { 
+String blueID[] = { 
   String("3F001EDAA05B"),
   String("4C0034E07DE5") };
 
@@ -18,6 +18,7 @@ Skyscraper::Skyscraper(int id, int rfidPin, int servoPin, int red, int blue) {
   _servoPin = servoPin;
   _red = red;
   _blue = blue;
+  _color = "none";
 }
 
 // Initializes the skyscraper for gameplay.
@@ -25,12 +26,14 @@ void Skyscraper::initSkyscraper() {
   Serial.println("Initializing Tower "+String(_id));
   _servo.attach(_servoPin);
   _servo.write(90);
+  pinMode(_red, OUTPUT);
   analogWrite(_red, 0);
+  pinMode(_blue, OUTPUT);
   analogWrite(_blue, 0);
 }
 
-// Detects an incoming RFID.
-void Skyscraper::readRFID() {
+// Detects an incoming RFID. Returns 1 if a known ID is detected, 0 otherwise.
+int Skyscraper::readRFID() {
   Serial.println("Tower "+String(_id)+":");
 
   String rfid = ""; // stores RFID string
@@ -40,15 +43,15 @@ void Skyscraper::readRFID() {
   // reset readers
   for (int i = 3; i < 8; i++) {
     if (i == _rfidPin) {
-      Serial.println("  digitalWrite("+String(i)+", HIGH);");
+      // Serial.println("  digitalWrite("+String(i)+", HIGH);");
       digitalWrite(i, HIGH);
     }
     else {
-      Serial.println("  digitalWrite("+String(i)+", LOW);");
+      // Serial.println("  digitalWrite("+String(i)+", LOW);");
       digitalWrite(i, LOW);
     }
   }
-  delay(200);
+  delay(300);
 
   // read the serial port
   while (Serial.available()) {
@@ -66,19 +69,29 @@ void Skyscraper::readRFID() {
   
   // check color
   for (int i = 0; i < NUM_RINGS; i++) {
-    if (rfid == clean(red[i])) {
+    if (rfid == clean(redID[i])) {
       Serial.println("  detected red!");
-      analogWrite(_red, 255); 
-      analogWrite(_blue, 0); 
+      if (_color != "red") {
+        analogWrite(_red, 255); 
+        analogWrite(_blue, 0);
+        _color = "red";
+      }
       turnServo();
+      return 1;
     }
-    else if (rfid == clean(blue[i])) {
+    else if (rfid == clean(blueID[i])) {
       Serial.println("  detected blue!");
-      analogWrite(_red, 0);
-      analogWrite(_blue, 255);
+      if (_color != "blue") {
+        analogWrite(_red, 0); 
+        analogWrite(_blue, 255);
+        _color = "blue";
+      }
       turnServo();
+      return 1;
     }
   }
+
+  return 0; // no rfid detected
 }
 
 // Turns the servo.
@@ -88,10 +101,26 @@ void Skyscraper::turnServo() {
   _servo.write(90);
 }
 
-// Clears all colors.
-void Skyscraper::resetColor() {
-  analogWrite(_red, 0);
-  analogWrite(_blue, 0);
+// Gets the current color.
+String Skyscraper::getColor() {
+  return _color;
+}
+
+// Sets the current color.
+void Skyscraper::setColor(String color) {
+  _color = color;
+  if (color == "red") {
+    analogWrite(_red, 255);
+    analogWrite(_blue, 0);
+  }
+  else if (color == "blue") {
+    analogWrite(_red, 0);
+    analogWrite(_blue, 255);
+  }
+  else {
+    analogWrite(_red, 0);
+    analogWrite(_blue, 0);
+  }
 }
 
 // Strips non-alphanumeric characters from a string.

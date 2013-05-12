@@ -2,23 +2,43 @@
 #include "Skyscraper.h"
 #include "Pitches.h"
 
-// towers
-Skyscraper tower1(1, 3, 0, 0);
-Skyscraper tower2(2, 4, 0, 0);
-Skyscraper tower3(3, 5, 0, 0);
-Skyscraper tower4(4, 6, 0, 0);
-Skyscraper tower5(5, 7, 0, 0);
+// TODO: set correct pin #'s
+// id, rfid, servo, red, blue
+Skyscraper tower1(1, 3, 0, 0, 0);
+Skyscraper tower2(2, 4, 0, 0, 0);
+Skyscraper tower3(3, 5, 0, 0, 0);
+Skyscraper tower4(4, 6, 0, 0, 0);
+Skyscraper tower5(5, 7, 0, 0, 0);
 
 Skyscraper towers[] = { tower1, tower2, tower3, tower4, tower5 }; // array containing all towers
 
 // game parameters
 int TIME_LIMIT;
+int red;
+int blue;
+int AUDIO_PIN = 0; // TODO: set pin #
 
-// music
+// audio
 int startMelody[] = {
-  NOTE_C4, NOTE_G4,NOTE_G3, NOTE_A3, NOTE_G3,0, NOTE_B3, NOTE_C4 };
+  NOTE_C4, NOTE_G4, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4 };
 int startDurations[] = {
   4, 8, 8, 4, 4, 4, 4, 4 };
+int endMelody[] = {
+  NOTE_C4, NOTE_C4, NOTE_D4, NOTE_E4, NOTE_F3, NOTE_D3, NOTE_C3 };
+int endDurations[] = {
+  8, 8, 8, 8, 4, 4, 2 };
+int drawMelody[] = {
+  NOTE_AS3, NOTE_A, NOTE_GS3, NOTE_G, NOTE_FS3, NOTE_F };
+int drawDurations[] = {
+  4, 4, 4, 4, 4 };
+int drawMelody[] = {
+  NOTE_AS3, NOTE_A, NOTE_GS3, NOTE_G, NOTE_FS3, NOTE_F };
+int drawDurations[] = {
+  4, 4, 4, 4, 4, 4 };
+int scoreMelody[] = {
+  NOTE_C3, NOTE_C3, NOTE_E3, NOTE_G3, NOTE_C4 };
+int scoreDurations[] = {
+  4, 8, 8, 8, 4 };
 
 // Sets up the game logic.
 void setup() {
@@ -26,55 +46,89 @@ void setup() {
   
   Serial.begin(9600);
   
-  pinMode(3, OUTPUT);
-  digitalWrite(3, LOW);
-  pinMode(4, OUTPUT);
-  digitalWrite(4, LOW);
-  pinMode(5, OUTPUT);
-  digitalWrite(5, LOW);
-  pinMode(6, OUTPUT);
-  digitalWrite(6, LOW);
-  pinMode(7, OUTPUT);
-  digitalWrite(7, LOW);
+  for (int i = 3; i < 8; i++) {
+    pinMode(i, OUTPUT);
+    digitalWrite(i, LOW);
+  }
   
-  tower1.initSkyscraper();
-  tower2.initSkyscraper();
-  tower3.initSkyscraper();
-  tower4.initSkyscraper();
-  tower5.initSkyscraper();
+  for (int i = 0; i < 5; i++) {
+    towers[i].initSkyscraper();
+  }
   
-  // TODO: Starting sound
-  // playSound(startMelody, startDurations);
+  playSound(startMelody, startDurations, 8);
   TIME_LIMIT = 60000 + millis(); // one minute from initialization
 }
 
 // Main loop.
 void loop() {
   Serial.println("running...");
-  tower1.readRFID();
-  tower2.readRFID();
-  tower3.readRFID();
-  tower4.readRFID();
-  tower5.readRFID();
+  red = 0;
+  blue = 0;
   
-//  if (millis() > TIME_LIMIT) {
-//    gameOver();
-//  }
+  for (int i = 0; i < 5; i++) {
+    if(towers[i].readRFID() == 1) {
+      playSound(scoreMelody, scoreDurations, 5);
+    }
+    if (towers[i].getColor() == "red") {
+      red++; 
+    }
+    else if (towers[i].getColor() == "blue") {
+      blue++;
+    }
+  }
+  
+  if (millis() > TIME_LIMIT || red == 5 || blue == 5) { // victory conditions: time, monopoly
+    gameOver();
+  }
+}
 
-//void playSound(int melody[], int noteDurations[]) {
-//  for (int i = 0; i < 8 ; i++) {
-//    int noteDuration = 1000/noteDurations[i];
-//    tone(8, melody[i], noteDuration);
-//    int pauseBetweenNotes = noteDuration * 1.30;
-//    delay(pauseBetweenNotes);
-//    noTone(8);
-//  }
+void playSound(int melody[], int noteDurations[], int length) {
+  for (int i = 0; i < length ; i++) {
+    int noteDuration = 1000/noteDurations[i];
+    tone(AUDIO_PIN, melody[i], noteDuration);
+    int pauseBetweenNotes = noteDuration * 1.30;
+    delay(pauseBetweenNotes);
+    noTone(AUDIO_PIN);
+  }
 }
 
 void gameOver() {
-  // TODO: Ending sound
   Serial.println("game over");
-  tower1.resetColor();
-  tower2.resetColor();
+  
+  if (red > blue) { // red wins
+    for (int i = 0; i < 10; i++) {
+      for (int j = 0; j < 5; j++) {
+        towers[j].setColor("red");
+        delay(200);
+        towers[j].setColor("none");
+        delay(200);
+      }
+    }
+    playSound(endMelody, endDurations, 7);
+  }
+  else if (blue > red) { // blue wins
+    for (int i = 0; i < 10; i++) {
+      for (int j = 0; j < 5; j++) {
+        towers[j].setColor("red");
+        delay(200);
+        towers[j].setColor("none");
+        delay(200);
+      }
+    }
+    playSound(endMelody, endDurations, 7);
+  }
+  else { // nobody wins
+    String colors[] = { tower1.getColor(), tower2.getColor(), tower3.getColor(), tower4.getColor(), tower5.getColor() };
+    for (int i = 0; i < 10; i++) {
+      for (int j = 0; j < 5; j++) {
+        towers[j].setColor(colors[j]);
+        delay(200);
+        towers[j].setColor("none");
+        delay(200);
+      }
+    }
+    playSound(drawMelody, drawDurations, 6);
+  }
+  
   while(1) { } // infinite empty loop
 }

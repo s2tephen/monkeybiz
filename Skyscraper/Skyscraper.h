@@ -11,12 +11,13 @@
 // servoPin - the output pin for the servo
 // red - this skyscraper's red output pin
 // blue - this skyscraper's blue output pin
-// clean - strips non-alphanumeric characters from a string
+// color - this skyscraper's current color
 //
 // Skyscraper - skyscraper constructor
 // initSkyscraper - initializes the skyscraper for gameplay
 // readRFID - detects an incoming RFID
-// resetColor - clears all colors
+// getColor - gets current color
+// setColor - sets current color
 // turnServo - turns the servo
 // clean - strips non-alphanumeric characters from a string
 class Skyscraper {
@@ -26,14 +27,16 @@ class Skyscraper {
     int _servoPin;
     Servo _servo;
     int _red;
-    int _green;
+    int _blue;
+    String _color;
     void turnServo();
     String clean(String s);
   public:
     Skyscraper(int id, int rfidPin, int servoPin, int red, int blue);
     void initSkyscraper();
-    void readRFID();
-    void resetColor();
+    int readRFID();
+    String getColor();
+    void setColor(String color);
 };
 
 #endif
