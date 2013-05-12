@@ -28,13 +28,9 @@ int endMelody[] = {
 int endDurations[] = {
   8, 8, 8, 8, 4, 4, 2 };
 int drawMelody[] = {
-  NOTE_AS3, NOTE_A, NOTE_GS3, NOTE_G, NOTE_FS3, NOTE_F };
+  NOTE_AS3, NOTE_A3, NOTE_GS3, NOTE_G3, NOTE_FS3, NOTE_F3 };
 int drawDurations[] = {
   4, 4, 4, 4, 4 };
-int drawMelody[] = {
-  NOTE_AS3, NOTE_A, NOTE_GS3, NOTE_G, NOTE_FS3, NOTE_F };
-int drawDurations[] = {
-  4, 4, 4, 4, 4, 4 };
 int scoreMelody[] = {
   NOTE_C3, NOTE_C3, NOTE_E3, NOTE_G3, NOTE_C4 };
 int scoreDurations[] = {
